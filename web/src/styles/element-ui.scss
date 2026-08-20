@@ -22,6 +22,32 @@
   margin: 0;
 }
 
+.el-tabs--card > .el-tabs__header {
+  height: 26px;
+
+  .el-tabs__nav,
+  .el-tabs__item {
+    height: 26px;
+  }
+
+  .el-tabs__item {
+    padding: 0 8px;
+    font-size: 12px;
+    line-height: 26px;
+  }
+
+  .el-tabs__item.is-closable,
+  .el-tabs__item.is-active.is-closable {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+
+  .el-tabs__nav-next,
+  .el-tabs__nav-prev {
+    line-height: 26px;
+  }
+}
+
 .el-table {
   ::-webkit-scrollbar {
     /*滚动条整体部分，其中的属性有width,height,background,border等*/

@@ -1,29 +1,31 @@
 <template>
   <div id="app">
     <el-container>
-      <el-header style="height: auto">
-        <vheader @ssh-select="() => {
-          this.$refs.tabs.openTerm()
-        }"/>
-      </el-header>
-      <el-container>
-        <el-main style="padding: 0">
-            <tabs ref="tabs"></tabs>
-        </el-main>
-      </el-container>
+      <el-main style="padding: 0">
+        <tabs ref="tabs"></tabs>
+      </el-main>
     </el-container>
+    <connection-drawer @connect="openConnection" />
   </div>
 </template>
 
 <script>
-import Header from '@/components/Header'
+import ConnectionDrawer from '@/components/ConnectionDrawer'
 import Tabs from '@/components/Tabs'
 
 export default {
     name: 'App',
     components: {
-        vheader: Header,
+        ConnectionDrawer,
         tabs: Tabs
+    },
+    methods: {
+        openConnection(connection) {
+            this.$store.commit('SET_SSH', connection)
+            this.$nextTick(() => {
+                this.$refs.tabs.openTerm()
+            })
+        }
     }
 }
 </script>

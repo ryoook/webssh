@@ -43,6 +43,17 @@ func (sclient *SSHClient) GenerateClient() error {
 	auth = make([]ssh.AuthMethod, 0)
 	if sclient.LoginType == 0 {
 		auth = append(auth, ssh.Password(sclient.Password))
+		auth = append(auth, ssh.KeyboardInteractive(func(
+			user, instruction string,
+			questions []string,
+			echos []bool,
+		) ([]string, error) {
+			answers := make([]string, len(questions))
+			for i := range answers {
+				answers[i] = sclient.Password
+			}
+			return answers, nil
+		}))
 	} else {
 		if signer, err := ssh.ParsePrivateKey([]byte(sclient.Password)); err != nil {
 			return err

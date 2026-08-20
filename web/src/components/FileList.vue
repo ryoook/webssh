@@ -1,6 +1,6 @@
 <template>
     <div class="MainContainer">
-        <el-button type="primary" size="small" @click="getFileList(); dialogVisible = true">{{$t('FileBrowser')}}</el-button>
+        <el-button v-if="showButton" type="primary" size="small" @click="openBrowser">{{$t('FileBrowser')}}</el-button>
         <el-dialog :title="$t('FileBrowser') + '(' + this.$store.state.sshInfo.host + ')'" :visible.sync="dialogVisible" top="5vh" :width="dialogWidth">
             <el-row>
                 <el-col :span="this.pathSpan">
@@ -50,6 +50,12 @@ import { mapState } from 'vuex'
 
 export default {
     name: 'FileList',
+    props: {
+        showButton: {
+            type: Boolean,
+            default: true
+        }
+    },
     data() {
         return {
             uploadVisible: false,
@@ -96,6 +102,10 @@ export default {
         }
     },
     methods: {
+        openBrowser() {
+            this.getFileList()
+            this.dialogVisible = true
+        },
         resizeDialog() {
             const clientWidth = document.body.clientWidth
             this.clientHeight = document.body.clientHeight - 200

@@ -16,6 +16,7 @@
                 <li @click="copyTab()"><el-button type="text" size="mini">{{$t('Copy')}}</el-button></li>
                 <li @click="lockTab()"><el-button type="text" size="mini">{{ lockButtonShow(menuTab) }}</el-button></li>
                 <li @click="setScreenfull()"><el-button type="text" size="mini">{{ $t('FullScreen') }}</el-button></li>
+                <li @click="openFileBrowser()"><el-button type="text" size="mini">{{ $t('FileBrowser') }}</el-button></li>
                 <li @click="removeTab(menuTab)"><el-button type="text" size="mini">{{$t('Close')}}</el-button></li>
                 <el-divider></el-divider>
                 <li @click="renameTab()"><el-button type="text" size="mini">{{$t('Rename')}}</el-button></li>
@@ -26,6 +27,7 @@
                 <li @click="closeTabs('all')"><el-button type="text" size="mini">{{$t('CloseAll')}}</el-button></li>
             </ul>
         </div>
+        <file-list ref="fileList" :show-button="false" />
     </div>
 </template>
 
@@ -33,12 +35,14 @@
 import Sortable from 'sortablejs'
 import screenfull from 'screenfull'
 import Terminal from '@/components/Terminal'
+import FileList from '@/components/FileList'
 import {MessageBox} from 'element-ui'
 
 export default {
     name: 'Tabs',
     components: {
-        terminal: Terminal
+        terminal: Terminal,
+        FileList
     },
     data () {
         return {
@@ -87,6 +91,22 @@ export default {
         })
     },
     methods: {
+        openFileBrowser() {
+            const tabIndex = this.termList.findIndex(tab => tab.name === this.menuTab)
+            if (tabIndex === -1) {
+                return
+            }
+            const tab = this.termList[tabIndex]
+            this.currentTerm = tab.name
+            this.currentTermIndex = tabIndex
+            this.$store.commit('SET_TAB', tab)
+            this.$refs[`${this.menuTab}`][0].setSSH()
+            document.title = tab.label
+            this.closeContextMenu()
+            this.$nextTick(() => {
+                this.$refs.fileList.openBrowser()
+            })
+        },
         lockButtonShow(targetName) {
             if (this.termList.length > 0 && targetName !== '') {
                 const tab = this.termList.filter(tab => tab.name === targetName)[0]

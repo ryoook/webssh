@@ -31,14 +31,7 @@ export default {
             this.$store.commit('SET_SSH', this.ssh)
         },
         resizeTerm(termWeb) {
-            const clientWidth = document.body.clientWidth
-            if (clientWidth < 600) {
-                termWeb.style.height = (document.body.clientHeight - 301) + 'px'
-            } else if (clientWidth >= 600 && clientWidth < 1000) {
-                termWeb.style.height = (document.body.clientHeight - 151) + 'px'
-            } else {
-                termWeb.style.height = (document.body.clientHeight - 101) + 'px'
-            }
+            termWeb.style.height = (document.body.clientHeight - 28) + 'px'
         },
         createTerm() {
             if (this.$store.state.sshInfo.password === '') {
@@ -158,32 +151,6 @@ export default {
                 this.savePass = result.Data.savePass
             }
             document.title = sshInfo.host
-            let sshList = this.$store.state.sshList
-            if (sshList === null) {
-                if (this.savePass) {
-                    sshList = `[{"host": "${sshInfo.host}", "username": "${sshInfo.username}", "port":${sshInfo.port}, "logintype":${sshInfo.logintype}, "password":"${sshInfo.password}"}]`
-                } else {
-                    sshList = `[{"host": "${sshInfo.host}", "username": "${sshInfo.username}", "port":${sshInfo.port},  "logintype":${sshInfo.logintype}}]`
-                }
-            } else {
-                const sshListObj = JSON.parse(window.atob(sshList))
-                sshListObj.forEach((v, i) => {
-                    if (v.host === sshInfo.host) {
-                        sshListObj.splice(i, 1)
-                    }
-                })
-                sshListObj.push({
-                    host: sshInfo.host,
-                    username: sshInfo.username,
-                    port: sshInfo.port,
-                    logintype: sshInfo.logintype
-                })
-                if (this.savePass) {
-                    sshListObj[sshListObj.length - 1].password = sshInfo.password
-                }
-                sshList = JSON.stringify(sshListObj)
-            }
-            this.$store.commit('SET_LIST', window.btoa(sshList))
         },
         close() {
             if (this.ws !== null) {

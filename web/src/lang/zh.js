@@ -37,5 +37,19 @@ export default {
     clickSelectFile: '点击选择文件',
     clickSelectFolder: '点击选择文件夹',
     uploadFile: '上传文件',
-    uploadFolder: '上传文件夹'
+    uploadFolder: '上传文件夹',
+    Connections: '连接',
+    NewConnection: '新建',
+    Manage: '管理',
+    FinishManaging: '完成',
+    NoConnections: '暂无连接信息',
+    Edit: '编辑',
+    Delete: '删除',
+    EditConnection: '编辑连接',
+    Authentication: '认证方式',
+    InvalidPort: '端口必须是 1 到 65535 之间的整数',
+    RequiredValue: '此项不能为空',
+    Save: '保存',
+    DeleteConnection: '删除连接',
+    DeleteConnectionConfirm: '确定删除连接 {host} 吗？'
 }

@@ -10,10 +10,16 @@ import {
     Table,
     TableColumn,
     Input,
+    InputNumber,
     Message,
+    MessageBox,
     Container,
     Header,
     Main,
+    Drawer,
+    Empty,
+    RadioGroup,
+    RadioButton,
     Upload,
     Dropdown,
     DropdownMenu,
@@ -26,7 +32,12 @@ import {
 const element = {
     install: function (Vue) {
         Vue.use(Input)
+        Vue.use(InputNumber)
         Vue.use(Dialog)
+        Vue.use(Drawer)
+        Vue.use(Empty)
+        Vue.use(RadioGroup)
+        Vue.use(RadioButton)
         Vue.use(Row)
         Vue.use(Col)
         Vue.use(Form)
@@ -47,6 +58,7 @@ const element = {
         Vue.use(Divider)
         Vue.use(Tooltip)
         Vue.prototype.$message = Message
+        Vue.prototype.$confirm = MessageBox.confirm
     }
 }
 export default element

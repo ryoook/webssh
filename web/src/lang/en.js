@@ -1,4 +1,9 @@
 export default {
+    OK: 'OK',
+    Cancel: 'Cancel',
+    password: 'Password',
+    privateKey: 'Private key',
+    SelectFile: 'Select file',
     hostTip: 'please input remote host',
     portTip: 'input port',
     nameTip: 'please input username',
@@ -9,5 +14,19 @@ export default {
     unlockClose: 'please unlock to close tab',
     clickSelectFile: 'click to select upload file',
     clickSelectFolder: 'click to select upload folder',
-    uploadFinish: ' upload finish'
+    uploadFinish: ' upload finish',
+    Connections: 'Connections',
+    NewConnection: 'New',
+    Manage: 'Manage',
+    FinishManaging: 'Done',
+    NoConnections: 'No saved connections',
+    Edit: 'Edit',
+    Delete: 'Delete',
+    EditConnection: 'Edit connection',
+    Authentication: 'Authentication',
+    InvalidPort: 'Port must be an integer between 1 and 65535',
+    RequiredValue: 'This field is required',
+    Save: 'Save',
+    DeleteConnection: 'Delete connection',
+    DeleteConnectionConfirm: 'Delete connection {host}?'
 }
