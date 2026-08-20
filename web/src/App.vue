@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <el-container>
-      <el-main style="padding: 0">
+      <el-main style="padding: 0; overflow: hidden">
         <tabs ref="tabs"></tabs>
       </el-main>
     </el-container>
