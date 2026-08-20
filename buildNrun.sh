@@ -78,7 +78,16 @@ echo "[2/3] 编译 Go 程序..."
 mkdir -p "$BINARY_DIR"
 (
     cd "$PROJECT_DIR"
-    go build -o "$BINARY_PATH" .
+    local_go_version=$(GOTOOLCHAIN=local go version | awk '{ print $3 }')
+    if [[ ! "$local_go_version" =~ ^go([0-9]+)\.([0-9]+) ]]; then
+        fail "无法识别本地 Go 版本: $local_go_version"
+    fi
+    go_major=${BASH_REMATCH[1]}
+    go_minor=${BASH_REMATCH[2]}
+    if (( go_major < 1 || (go_major == 1 && go_minor < 21) )); then
+        fail "本地 Go 版本为 $local_go_version，项目至少需要 Go 1.21"
+    fi
+    GOTOOLCHAIN=local go build -o "$BINARY_PATH" .
 )
 
 echo "[3/3] 后台启动服务..."

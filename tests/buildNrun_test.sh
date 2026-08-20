@@ -6,6 +6,7 @@ project_dir=$(cd "$(dirname "$0")/.." && pwd)
 script_path="$project_dir/buildNrun.sh"
 env_path="$project_dir/.env"
 example_path="$project_dir/.env.example"
+go_mod_path="$project_dir/go.mod"
 
 assert() {
     "$@" || {
@@ -43,7 +44,14 @@ assert_contains 'vue-cli-service build'
 assert_contains 'node_major='
 assert_contains 'if (( node_major >= 17 ))'
 assert_contains 'go build'
+assert_contains 'GOTOOLCHAIN=local'
 assert_contains 'nohup'
 assert_contains '>> "$LOG_PATH" 2>&1'
+
+go_mod_content=$(<"$go_mod_path")
+[[ "$go_mod_content" == *'go 1.21.0'* ]] || {
+    echo "go.mod must target Go 1.21.0" >&2
+    exit 1
+}
 
 echo "buildNrun.sh checks passed"

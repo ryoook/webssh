@@ -1,6 +1,6 @@
 module webssh
 
-go 1.23
+go 1.21.0
 
 require (
 	github.com/gin-contrib/gzip v1.2.2
