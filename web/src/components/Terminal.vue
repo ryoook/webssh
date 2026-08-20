@@ -30,6 +30,13 @@ export default {
         setSSH() {
             this.$store.commit('SET_SSH', this.ssh)
         },
+        insertText(text) {
+            if (!this.term || text == null || text === '') {
+                return false
+            }
+            this.term.paste(String(text))
+            return true
+        },
         resizeTerm(termWeb) {
             termWeb.style.height = (document.body.clientHeight - 28) + 'px'
         },

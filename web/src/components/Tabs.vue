@@ -91,6 +91,17 @@ export default {
         })
     },
     methods: {
+        insertToCurrentTerm(text) {
+            if (!this.currentTerm || this.termList.length === 0) {
+                return false
+            }
+            const terminalRefs = this.$refs[this.currentTerm]
+            const terminal = Array.isArray(terminalRefs) ? terminalRefs[0] : terminalRefs
+            if (!terminal || typeof terminal.insertText !== 'function') {
+                return false
+            }
+            return terminal.insertText(text) === true
+        },
         openFileBrowser() {
             const tabIndex = this.termList.findIndex(tab => tab.name === this.menuTab)
             if (tabIndex === -1) {
