@@ -28,5 +28,16 @@ export default {
     RequiredValue: 'This field is required',
     Save: 'Save',
     DeleteConnection: 'Delete connection',
-    DeleteConnectionConfirm: 'Delete connection {host}?'
+    DeleteConnectionConfirm: 'Delete connection {host}?',
+    Commands: 'Commands',
+    NewCommand: 'New',
+    NoCommands: 'No saved commands',
+    EditCommand: 'Edit command',
+    CommandName: 'Name',
+    CommandContent: 'Content',
+    DeleteCommand: 'Delete command',
+    DeleteCommandConfirm: 'Delete command {name}?',
+    OpenTerminalFirst: 'Please open a terminal first',
+    nameRequired: 'Please enter a name',
+    contentRequired: 'Please enter content'
 }

@@ -51,5 +51,16 @@ export default {
     RequiredValue: '此项不能为空',
     Save: '保存',
     DeleteConnection: '删除连接',
-    DeleteConnectionConfirm: '确定删除连接 {host} 吗？'
+    DeleteConnectionConfirm: '确定删除连接 {host} 吗？',
+    Commands: '常用命令',
+    NewCommand: '新建',
+    NoCommands: '暂无常用命令',
+    EditCommand: '编辑命令',
+    CommandName: '名称',
+    CommandContent: '内容',
+    DeleteCommand: '删除命令',
+    DeleteCommandConfirm: '确定删除命令 {name} 吗？',
+    OpenTerminalFirst: '请先打开终端',
+    nameRequired: '请输入名称',
+    contentRequired: '请输入内容'
 }

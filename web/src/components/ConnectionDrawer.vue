@@ -319,7 +319,7 @@ export default {
 .connection-trigger {
     position: fixed;
     right: 0;
-    top: 50%;
+    top: calc(50% + 72px);
     z-index: 1900;
     transform: translateY(-50%);
     padding: 13px 10px;
