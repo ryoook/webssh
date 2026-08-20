@@ -59,7 +59,19 @@ echo "[1/3] 编译前端..."
     if [[ ! -d node_modules ]]; then
         npm ci
     fi
-    NODE_OPTIONS=${NODE_OPTIONS:---openssl-legacy-provider} ./node_modules/.bin/vue-cli-service build
+    node_major=$(env -u NODE_OPTIONS node -p "process.versions.node.split('.')[0]")
+    clean_node_options=${NODE_OPTIONS:-}
+    clean_node_options=${clean_node_options//--openssl-legacy-provider/}
+    if (( node_major >= 17 )); then
+        legacy_node_options="$clean_node_options --openssl-legacy-provider"
+        if NODE_OPTIONS="$legacy_node_options" node -e "" >/dev/null 2>&1; then
+            NODE_OPTIONS="$legacy_node_options" ./node_modules/.bin/vue-cli-service build
+        else
+            NODE_OPTIONS="$clean_node_options" ./node_modules/.bin/vue-cli-service build
+        fi
+    else
+        NODE_OPTIONS="$clean_node_options" ./node_modules/.bin/vue-cli-service build
+    fi
 )
 
 echo "[2/3] 编译 Go 程序..."
