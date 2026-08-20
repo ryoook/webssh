@@ -4,6 +4,10 @@ import {
     encodeConnections,
     migrateConnections
 } from '@/utils/connections'
+import {
+    decodeCommands,
+    encodeCommands
+} from '@/utils/commands'
 
 const storedConnections = Object.prototype.hasOwnProperty.call(localStorage, 'sshList')
     ? localStorage.getItem('sshList')
@@ -12,6 +16,13 @@ const migratedConnections = migrateConnections(decodeConnections(storedConnectio
 const encodedConnections = storedConnections === null
     ? null
     : encodeConnections(migratedConnections)
+
+const storedCommands = Object.prototype.hasOwnProperty.call(localStorage, 'commandList')
+    ? localStorage.getItem('commandList')
+    : null
+const encodedCommands = storedCommands === null
+    ? null
+    : encodeCommands(decodeCommands(storedCommands))
 
 if (encodedConnections !== null && encodedConnections !== storedConnections) {
     localStorage.setItem('sshList', encodedConnections)
@@ -26,6 +37,7 @@ export default {
         logintype: 0
     },
     sshList: encodedConnections,
+    commandList: encodedCommands,
     termList: [],
     currentTab: {},
     language: getLanguage()

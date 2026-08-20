@@ -5,11 +5,24 @@ import {
     removeConnection,
     upsertConnection
 } from '@/utils/connections'
+import {
+    createCommandId,
+    decodeCommands,
+    encodeCommands,
+    removeCommand,
+    upsertCommand
+} from '@/utils/commands'
 
 function persistConnections(state, connections) {
     const encoded = encodeConnections(connections)
     state.sshList = encoded
     localStorage.setItem('sshList', encoded)
+}
+
+function persistCommands(state, commands) {
+    const encoded = encodeCommands(commands)
+    state.commandList = encoded
+    localStorage.setItem('commandList', encoded)
 }
 
 export default {
@@ -33,6 +46,21 @@ export default {
         persistConnections(
             state,
             removeConnection(decodeConnections(state.sshList), id)
+        )
+    },
+    UPSERT_COMMAND(state, command) {
+        const normalizedCommand = command.id
+            ? command
+            : Object.assign({ id: createCommandId() }, command)
+        persistCommands(
+            state,
+            upsertCommand(decodeCommands(state.commandList), normalizedCommand)
+        )
+    },
+    DELETE_COMMAND(state, id) {
+        persistCommands(
+            state,
+            removeCommand(decodeCommands(state.commandList), id)
         )
     },
     SET_TERMLIST(state, list) {
