@@ -29,6 +29,7 @@ set +a
 
 [[ "$PORT" =~ ^[0-9]+$ ]] || exit 1
 [[ -n "$LOG_PATH" ]] || exit 1
+[[ -n "$CONFIG_PATH" ]] || exit 1
 
 script_content=$(<"$script_path")
 assert_contains() {
@@ -47,6 +48,7 @@ assert_contains 'go build'
 assert_contains 'GOTOOLCHAIN=local'
 assert_contains 'nohup'
 assert_contains '>> "$LOG_PATH" 2>&1'
+assert_contains '-c "$CONFIG_PATH"'
 
 go_mod_content=$(<"$go_mod_path")
 [[ "$go_mod_content" == *'go 1.21.0'* ]] || {

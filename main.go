@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 	"webssh/controller"
+	"webssh/core/configstore"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ var (
 	port       = flag.Int("p", 5032, "服务运行端口")
 	v          = flag.Bool("v", false, "显示版本号")
 	authInfo   = flag.String("a", "", "开启账号密码登录验证, '-a user:pass'的格式传参")
+	configPath = flag.String("c", "./data", "连接与常用命令配置目录")
 	timeout    int
 	savePass   bool
 	version    string
@@ -48,6 +50,9 @@ func init() {
 		if b, err := strconv.Atoi(envVal); err == nil {
 			*port = b
 		}
+	}
+	if envVal, ok := os.LookupEnv("CONFIG_PATH"); ok && envVal != "" {
+		*configPath = envVal
 	}
 	flag.Parse()
 	if *v {
@@ -92,6 +97,56 @@ func main() {
 	server.SetTrustedProxies(nil)
 	server.Use(gzip.Gzip(gzip.DefaultCompression))
 	staticRouter(server)
+	store, err := configstore.New(*configPath, savePass)
+	if err != nil {
+		panic(err)
+	}
+	server.GET("/connections", func(c *gin.Context) {
+		list, err := store.LoadConnections()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, list)
+	})
+	server.PUT("/connections", func(c *gin.Context) {
+		var list []map[string]interface{}
+		if err := c.ShouldBindJSON(&list); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		if list == nil {
+			list = []map[string]interface{}{}
+		}
+		if err := store.SaveConnections(list); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, list)
+	})
+	server.GET("/commands", func(c *gin.Context) {
+		list, err := store.LoadCommands()
+		if err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, list)
+	})
+	server.PUT("/commands", func(c *gin.Context) {
+		var list []map[string]interface{}
+		if err := c.ShouldBindJSON(&list); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		if list == nil {
+			list = []map[string]interface{}{}
+		}
+		if err := store.SaveCommands(list); err != nil {
+			c.JSON(500, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, list)
+	})
 	server.GET("/term", func(c *gin.Context) {
 		controller.TermWs(c, time.Duration(timeout)*time.Minute)
 	})

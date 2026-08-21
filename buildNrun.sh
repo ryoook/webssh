@@ -25,10 +25,12 @@ PORT=${PORT:-}
 AUTH_USER=${AUTH_USER:-}
 AUTH_PASSWORD=${AUTH_PASSWORD:-}
 LOG_PATH=${LOG_PATH:-}
+CONFIG_PATH=${CONFIG_PATH:-}
 
 [[ "$PORT" =~ ^[0-9]+$ ]] || fail "PORT 必须是数字"
 (( PORT >= 1 && PORT <= 65535 )) || fail "PORT 必须在 1 到 65535 之间"
 [[ -n "$LOG_PATH" ]] || fail "LOG_PATH 不能为空"
+[[ -n "$CONFIG_PATH" ]] || fail "CONFIG_PATH 不能为空"
 
 if [[ -n "$AUTH_USER" || -n "$AUTH_PASSWORD" ]]; then
     [[ -n "$AUTH_USER" && -n "$AUTH_PASSWORD" ]] || fail "AUTH_USER 和 AUTH_PASSWORD 必须同时配置"
@@ -37,6 +39,9 @@ fi
 
 if [[ "$LOG_PATH" != /* ]]; then
     LOG_PATH="$PROJECT_DIR/${LOG_PATH#./}"
+fi
+if [[ "$CONFIG_PATH" != /* ]]; then
+    CONFIG_PATH="$PROJECT_DIR/${CONFIG_PATH#./}"
 fi
 
 port_in_use() {
@@ -92,8 +97,9 @@ mkdir -p "$BINARY_DIR"
 
 echo "[3/3] 后台启动服务..."
 mkdir -p "$(dirname "$LOG_PATH")"
+mkdir -p "$CONFIG_PATH"
 
-run_args=(-p "$PORT")
+run_args=(-p "$PORT" -c "$CONFIG_PATH")
 if [[ -n "$AUTH_USER" ]]; then
     run_args+=(-a "$AUTH_USER:$AUTH_PASSWORD")
 fi
