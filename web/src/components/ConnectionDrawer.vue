@@ -149,10 +149,7 @@
 
 <script>
 import { getLanguage } from '@/lang/index'
-import {
-    createConnectionId,
-    decodeConnections
-} from '@/utils/connections'
+import { createConnectionId } from '@/utils/connections'
 
 function emptyConnection() {
     return {
@@ -194,7 +191,7 @@ export default {
     },
     computed: {
         connections() {
-            return decodeConnections(this.$store.state.sshList)
+            return this.$store.state.sshList
         },
         drawerWidth() {
             return this.windowWidth < 480 ? '100%' : '340px'
@@ -264,7 +261,7 @@ export default {
                 const connection = Object.assign({}, this.form, {
                     port: Number(this.form.port)
                 })
-                this.$store.commit('UPSERT_CONNECTION', connection)
+                this.$store.dispatch('upsertConnection', connection)
                 this.formVisible = false
                 if (this.connectAfterSave) {
                     this.openConnection(connection)
@@ -281,7 +278,7 @@ export default {
                     type: 'warning'
                 }
             ).then(() => {
-                this.$store.commit('DELETE_CONNECTION', connection.id)
+                this.$store.dispatch('deleteConnection', connection.id)
             }).catch(() => {})
         },
         resetForm() {

@@ -1,67 +1,33 @@
-import {
-    createConnectionId,
-    decodeConnections,
-    encodeConnections,
-    removeConnection,
-    upsertConnection
-} from '@/utils/connections'
-import {
-    createCommandId,
-    decodeCommands,
-    encodeCommands,
-    removeCommand,
-    upsertCommand
-} from '@/utils/commands'
-
-function persistConnections(state, connections) {
-    const encoded = encodeConnections(connections)
-    state.sshList = encoded
-    localStorage.setItem('sshList', encoded)
-}
-
-function persistCommands(state, commands) {
-    const encoded = encodeCommands(commands)
-    state.commandList = encoded
-    localStorage.setItem('commandList', encoded)
-}
+import { createConnectionId, removeConnection, upsertConnection } from '@/utils/connections'
+import { createCommandId, removeCommand, upsertCommand } from '@/utils/commands'
 
 export default {
     SET_PASS(state, pass) {
         state.sshInfo.password = pass
     },
-    SET_LIST(state, list) {
-        state.sshList = list
-        localStorage.setItem('sshList', list)
+    SET_CONNECTIONS(state, list) {
+        state.sshList = Array.isArray(list) ? list : []
+    },
+    SET_COMMANDS(state, list) {
+        state.commandList = Array.isArray(list) ? list : []
     },
     UPSERT_CONNECTION(state, connection) {
-        const normalizedConnection = connection.id
+        const normalized = connection.id
             ? connection
             : Object.assign({ id: createConnectionId() }, connection)
-        persistConnections(
-            state,
-            upsertConnection(decodeConnections(state.sshList), normalizedConnection)
-        )
+        state.sshList = upsertConnection(state.sshList, normalized)
     },
     DELETE_CONNECTION(state, id) {
-        persistConnections(
-            state,
-            removeConnection(decodeConnections(state.sshList), id)
-        )
+        state.sshList = removeConnection(state.sshList, id)
     },
     UPSERT_COMMAND(state, command) {
-        const normalizedCommand = command.id
+        const normalized = command.id
             ? command
             : Object.assign({ id: createCommandId() }, command)
-        persistCommands(
-            state,
-            upsertCommand(decodeCommands(state.commandList), normalizedCommand)
-        )
+        state.commandList = upsertCommand(state.commandList, normalized)
     },
     DELETE_COMMAND(state, id) {
-        persistCommands(
-            state,
-            removeCommand(decodeCommands(state.commandList), id)
-        )
+        state.commandList = removeCommand(state.commandList, id)
     },
     SET_TERMLIST(state, list) {
         state.termList = list

@@ -110,10 +110,7 @@
 </template>
 
 <script>
-import {
-    createCommandId,
-    decodeCommands
-} from '@/utils/commands'
+import { createCommandId } from '@/utils/commands'
 
 function emptyCommand() {
     return {
@@ -142,7 +139,7 @@ export default {
     },
     computed: {
         commands() {
-            return decodeCommands(this.$store.state.commandList)
+            return this.$store.state.commandList
         },
         drawerWidth() {
             return this.windowWidth < 480 ? '100%' : '340px'
@@ -200,7 +197,7 @@ export default {
                 if (!valid) {
                     return
                 }
-                this.$store.commit('UPSERT_COMMAND', Object.assign({}, this.form))
+                this.$store.dispatch('upsertCommand', Object.assign({}, this.form))
                 this.formVisible = false
             })
         },
@@ -214,7 +211,7 @@ export default {
                     type: 'warning'
                 }
             ).then(() => {
-                this.$store.commit('DELETE_COMMAND', command.id)
+                this.$store.dispatch('deleteCommand', command.id)
             }).catch(() => {})
         },
         resetForm() {

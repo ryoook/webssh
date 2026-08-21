@@ -16,6 +16,10 @@ Vue.use(element)
 
 Vue.config.productionTip = false
 
+store.dispatch('loadAndMigrate').catch(() => {
+    // request.js 已提示网络错误
+})
+
 /* eslint-disable no-new */
 new Vue({
     el: '#app',
