@@ -8,7 +8,7 @@ import {
 import {
     clearLegacyLocalStorage,
     readLegacyLocalStorage,
-    shouldMigrate
+    shouldMigrateResource
 } from '@/utils/migrate'
 
 async function reloadAll(commit) {
@@ -21,29 +21,41 @@ async function reloadAll(commit) {
     return { connections, commands }
 }
 
+function guardConfigLoaded(state) {
+    if (!state.configLoaded) {
+        Message.warning('配置尚未加载完成，请稍后重试')
+        throw new Error('config not loaded')
+    }
+}
+
 export default {
     setLanguage({ commit }, language) {
         commit('SET_LANGUAGE', language)
     },
     async loadAndMigrate({ commit }) {
         const { connections, commands } = await reloadAll(commit)
+        commit('SET_CONFIG_LOADED', true)
         const legacy = readLegacyLocalStorage()
-        if (shouldMigrate(connections, commands, legacy)) {
-            if (legacy.connections.length > 0) {
+        let migrated = false
+        try {
+            if (shouldMigrateResource(connections, legacy.connections)) {
                 await putConnections(legacy.connections)
+                clearLegacyLocalStorage(undefined, ['sshList'])
+                migrated = true
             }
-            if (legacy.commands.length > 0) {
+            if (shouldMigrateResource(commands, legacy.commands)) {
                 await putCommands(legacy.commands)
+                clearLegacyLocalStorage(undefined, ['commandList'])
+                migrated = true
             }
-            clearLegacyLocalStorage()
-            await reloadAll(commit)
-            return
-        }
-        if (legacy.connections.length > 0 || legacy.commands.length > 0) {
-            clearLegacyLocalStorage()
+        } finally {
+            if (migrated) {
+                await reloadAll(commit)
+            }
         }
     },
     async upsertConnection({ commit, state }, connection) {
+        guardConfigLoaded(state)
         commit('UPSERT_CONNECTION', connection)
         try {
             await putConnections(state.sshList)
@@ -54,6 +66,7 @@ export default {
         }
     },
     async deleteConnection({ commit, state }, id) {
+        guardConfigLoaded(state)
         commit('DELETE_CONNECTION', id)
         try {
             await putConnections(state.sshList)
@@ -64,6 +77,7 @@ export default {
         }
     },
     async upsertCommand({ commit, state }, command) {
+        guardConfigLoaded(state)
         commit('UPSERT_COMMAND', command)
         try {
             await putCommands(state.commandList)
@@ -74,6 +88,7 @@ export default {
         }
     },
     async deleteCommand({ commit, state }, id) {
+        guardConfigLoaded(state)
         commit('DELETE_COMMAND', id)
         try {
             await putCommands(state.commandList)

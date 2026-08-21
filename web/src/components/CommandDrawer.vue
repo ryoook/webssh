@@ -193,12 +193,16 @@ export default {
             this.$emit('insert', command.content)
         },
         saveCommand() {
-            this.$refs.commandForm.validate(valid => {
+            this.$refs.commandForm.validate(async valid => {
                 if (!valid) {
                     return
                 }
-                this.$store.dispatch('upsertCommand', Object.assign({}, this.form))
-                this.formVisible = false
+                try {
+                    await this.$store.dispatch('upsertCommand', Object.assign({}, this.form))
+                    this.formVisible = false
+                } catch (error) {
+                    // keep form open; action already showed the error
+                }
             })
         },
         confirmDelete(command) {
@@ -210,8 +214,12 @@ export default {
                     cancelButtonText: this.$t('Cancel'),
                     type: 'warning'
                 }
-            ).then(() => {
-                this.$store.dispatch('deleteCommand', command.id)
+            ).then(async () => {
+                try {
+                    await this.$store.dispatch('deleteCommand', command.id)
+                } catch (error) {
+                    // reload already happens in the action
+                }
             }).catch(() => {})
         },
         resetForm() {

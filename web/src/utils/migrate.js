@@ -5,11 +5,9 @@ function decodeLegacyList(encoded) {
     return decodeConnections(encoded)
 }
 
-function shouldMigrate(serverConnections, serverCommands, legacy) {
-    const serverEmpty = (!serverConnections || serverConnections.length === 0)
-        && (!serverCommands || serverCommands.length === 0)
-    const legacyPresent = (legacy.connections && legacy.connections.length > 0)
-        || (legacy.commands && legacy.commands.length > 0)
+function shouldMigrateResource(serverList, legacyList) {
+    const serverEmpty = !serverList || serverList.length === 0
+    const legacyPresent = !!(legacyList && legacyList.length > 0)
     return serverEmpty && legacyPresent
 }
 
@@ -29,18 +27,19 @@ function readLegacyLocalStorage(storage) {
     return { connections, commands }
 }
 
-function clearLegacyLocalStorage(storage) {
+function clearLegacyLocalStorage(storage, keys) {
     const store = storage || (typeof localStorage === 'undefined' ? null : localStorage)
-    if (!store) {
+    if (!store || !keys || keys.length === 0) {
         return
     }
-    store.removeItem('sshList')
-    store.removeItem('commandList')
+    keys.forEach(key => {
+        store.removeItem(key)
+    })
 }
 
 module.exports = {
     clearLegacyLocalStorage,
     decodeLegacyList,
     readLegacyLocalStorage,
-    shouldMigrate
+    shouldMigrateResource
 }

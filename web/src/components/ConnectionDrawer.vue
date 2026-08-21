@@ -254,17 +254,21 @@ export default {
             this.drawerVisible = false
         },
         saveConnection() {
-            this.$refs.connectionForm.validate(valid => {
+            this.$refs.connectionForm.validate(async valid => {
                 if (!valid) {
                     return
                 }
                 const connection = Object.assign({}, this.form, {
                     port: Number(this.form.port)
                 })
-                this.$store.dispatch('upsertConnection', connection)
-                this.formVisible = false
-                if (this.connectAfterSave) {
-                    this.openConnection(connection)
+                try {
+                    await this.$store.dispatch('upsertConnection', connection)
+                    this.formVisible = false
+                    if (this.connectAfterSave) {
+                        this.openConnection(connection)
+                    }
+                } catch (error) {
+                    // keep form open; action already showed the error
                 }
             })
         },
@@ -277,8 +281,12 @@ export default {
                     cancelButtonText: this.$t('Cancel'),
                     type: 'warning'
                 }
-            ).then(() => {
-                this.$store.dispatch('deleteConnection', connection.id)
+            ).then(async () => {
+                try {
+                    await this.$store.dispatch('deleteConnection', connection.id)
+                } catch (error) {
+                    // reload already happens in the action
+                }
             }).catch(() => {})
         },
         resetForm() {

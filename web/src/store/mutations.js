@@ -11,6 +11,9 @@ export default {
     SET_COMMANDS(state, list) {
         state.commandList = Array.isArray(list) ? list : []
     },
+    SET_CONFIG_LOADED(state, loaded) {
+        state.configLoaded = !!loaded
+    },
     UPSERT_CONNECTION(state, connection) {
         const normalized = connection.id
             ? connection

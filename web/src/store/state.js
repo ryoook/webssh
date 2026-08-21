@@ -10,6 +10,7 @@ export default {
     },
     sshList: [],
     commandList: [],
+    configLoaded: false,
     termList: [],
     currentTab: {},
     language: getLanguage()
