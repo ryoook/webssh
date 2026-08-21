@@ -8,7 +8,11 @@
                 :name="item.name"
                 :closable="item.closable"
             >
-                <terminal :id="'Terminal' + index" :ref="item.name"></terminal>
+                <terminal
+                    :id="'Terminal' + index"
+                    :ref="item.name"
+                    @close-tab="closeDisconnectedTab(item.name)"
+                ></terminal>
             </el-tab-pane>
         </el-tabs>
         <div v-show="contextMenuVisible">
@@ -244,6 +248,14 @@ export default {
             document.title = tab.label
             this.findTerm()
         },
+        closeDisconnectedTab(targetName) {
+            const tab = this.termList.find(item => item.name === targetName)
+            if (!tab) {
+                return
+            }
+            tab.closable = true
+            this.removeTab(targetName)
+        },
         removeTab(targetName) {
             let activeName = this.currentTerm
             for (let i = 0; i < this.termList.length; ++i) {
@@ -261,9 +273,22 @@ export default {
                     }
                 }
             }
-            this.currentTerm = activeName
-            this.$refs[`${this.currentTerm}`][0].setSSH()
             this.termList = this.termList.filter(tab => tab.name !== targetName)
+            if (this.termList.length === 0) {
+                this.currentTerm = ''
+                this.currentTermIndex = 0
+                this.$store.commit('SET_TAB', {})
+                return
+            }
+            if (!this.termList.some(tab => tab.name === activeName)) {
+                activeName = this.termList[this.termList.length - 1].name
+            }
+            this.currentTerm = activeName
+            const terminalRefs = this.$refs[this.currentTerm]
+            const terminal = Array.isArray(terminalRefs) ? terminalRefs[0] : terminalRefs
+            if (terminal && typeof terminal.setSSH === 'function') {
+                terminal.setSSH()
+            }
             this.findTerm()
         },
         async renameTab() {

@@ -91,7 +91,10 @@ export default {
                         message: this.$t('wsClose'),
                         type: 'warning',
                         duration: 0,
-                        showClose: true
+                        showClose: true,
+                        onClose: () => {
+                            this.$emit('close-tab')
+                        }
                     })
                     this.ws = null
                 }
