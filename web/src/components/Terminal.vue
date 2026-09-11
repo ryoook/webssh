@@ -18,12 +18,24 @@ export default {
             term: null,
             ws: null,
             resetClose: false,
+            manuallyClosed: false,
+            reconnectAttempts: 0,
+            reconnectTimer: null,
+            reconnectDisabled: false,
+            heartbeatTimer: null,
+            visibilityHandler: null,
             ssh: null,
             savePass: false,
             fontSize: 15
         }
     },
     mounted() {
+        this.visibilityHandler = () => {
+            if (!document.hidden && !this.isWebSocketOpen()) {
+                this.reconnect()
+            }
+        }
+        document.addEventListener('visibilitychange', this.visibilityHandler)
         this.createTerm()
     },
     methods: {
@@ -46,66 +58,16 @@ export default {
             }
             const termWeb = document.getElementById(this.id)
             this.resizeTerm(termWeb)
-            const sshReq = this.$store.getters.sshReq
             this.close()
-            const prefix = process.env.NODE_ENV === 'production' ? '' : '/ws'
             const fitAddon = new FitAddon()
             this.term = new Terminal()
             this.term.loadAddon(fitAddon)
             this.term.open(document.getElementById(this.id))
             try { fitAddon.fit() } catch (e) {/**/}
+            this.manuallyClosed = false
+            this.reconnectDisabled = false
             const self = this
-            const heartCheck = {
-                timeout: 5000, // 5s发一次心跳
-                intervalObj: null,
-                stop: function() {
-                    clearInterval(this.intervalObj)
-                },
-                start: function() {
-                    this.intervalObj = setInterval(function() {
-                        if (self.ws !== null && self.ws.readyState === 1) {
-                            self.ws.send('ping')
-                        }
-                    }, this.timeout)
-                }
-            }
-            let closeTip = '已超时关闭!'
-            if (this.$store.state.language === 'en') {
-                closeTip = 'Connection timed out!'
-            }
-            // open websocket
-            this.ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}${prefix}/term?sshInfo=${encodeURIComponent(sshReq)}&rows=${this.term.rows}&cols=${this.term.cols}&closeTip=${encodeURIComponent(closeTip)}`)
-            this.ws.onopen = () => {
-                console.log(Date(), 'onopen')
-                self.connected()
-                heartCheck.start()
-            }
-            this.ws.onclose = () => {
-                console.log(Date(), 'onclose')
-                if (!self.resetClose) {
-                    if (!this.savePass) {
-                        this.$store.commit('SET_PASS', '')
-                        this.ssh.password = ''
-                    }
-                    this.$message({
-                        message: this.$t('wsClose'),
-                        type: 'warning',
-                        duration: 0,
-                        showClose: true,
-                        onClose: () => {
-                            this.$emit('close-tab')
-                        }
-                    })
-                    this.ws = null
-                }
-                heartCheck.stop()
-                self.resetClose = false
-            }
-            this.ws.onerror = () => {
-                console.log(Date(), 'onerror')
-            }
-            const attachAddon = new AttachAddon(this.ws)
-            this.term.loadAddon(attachAddon)
+            this.connectWebSocket()
             this.term.attachCustomKeyEventHandler((e) => {
                 const keyArray = ['F5', 'F11', 'F12']
                 if (keyArray.indexOf(e.key) > -1) {
@@ -136,7 +98,7 @@ export default {
                         self.term.setOption('fontSize', --this.fontSize)
                     }
                     try { fitAddon.fit() } catch (e) {/**/}
-                    if (self.ws !== null && self.ws.readyState === 1) {
+                    if (self.isWebSocketOpen()) {
                         self.ws.send(`resize:${self.term.rows}:${self.term.cols}`)
                     }
                 }
@@ -144,8 +106,93 @@ export default {
             window.addEventListener('resize', () => {
                 self.resizeTerm(termWeb)
                 try { fitAddon.fit() } catch (e) {/**/}
-                if (self.ws !== null && self.ws.readyState === 1) {
+                if (self.isWebSocketOpen()) {
                     self.ws.send(`resize:${self.term.rows}:${self.term.cols}`)
+                }
+            })
+        },
+        connectWebSocket() {
+            let closeTip = '已超时关闭!'
+            if (this.$store.state.language === 'en') {
+                closeTip = 'Connection timed out!'
+            }
+            const prefix = process.env.NODE_ENV === 'production' ? '' : '/ws'
+            const sshReq = this.$store.getters.sshReq
+            const ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}${prefix}/term?sshInfo=${encodeURIComponent(sshReq)}&rows=${this.term.rows}&cols=${this.term.cols}&closeTip=${encodeURIComponent(closeTip)}`)
+            this.ws = ws
+            ws.onopen = () => {
+                console.log(Date(), 'onopen')
+                if (this.ws !== ws) return
+                this.reconnectAttempts = 0
+                this.startHeartbeat()
+                this.connected()
+            }
+            ws.onclose = () => {
+                console.log(Date(), 'onclose')
+                if (this.ws !== ws) return
+                this.stopHeartbeat()
+                this.ws = null
+                if (this.resetClose || this.manuallyClosed) {
+                    this.resetClose = false
+                    return
+                }
+                if (document.hidden) return
+                if (this.reconnectAttempts > 0) {
+                    this.reconnect()
+                    return
+                }
+                this.showDisconnectedMessage()
+            }
+            ws.onerror = () => {
+                console.log(Date(), 'onerror')
+            }
+            const attachAddon = new AttachAddon(ws)
+            this.term.loadAddon(attachAddon)
+        },
+        isWebSocketOpen() {
+            return this.ws !== null && this.ws.readyState === WebSocket.OPEN
+        },
+        isWebSocketActive() {
+            return this.ws !== null && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)
+        },
+        startHeartbeat() {
+            this.stopHeartbeat()
+            this.heartbeatTimer = setInterval(() => {
+                if (this.isWebSocketOpen()) this.ws.send('ping')
+            }, 5000)
+        },
+        stopHeartbeat() {
+            clearInterval(this.heartbeatTimer)
+            this.heartbeatTimer = null
+        },
+        reconnect() {
+            if (this.manuallyClosed || this.reconnectDisabled || document.hidden || this.reconnectTimer || this.isWebSocketActive()) return
+            if (this.reconnectAttempts >= 5) {
+                this.showDisconnectedMessage()
+                return
+            }
+            const delays = [1000, 2000, 4000, 6000]
+            const delay = delays[Math.min(this.reconnectAttempts, delays.length - 1)]
+            this.reconnectAttempts++
+            this.reconnectTimer = setTimeout(() => {
+                this.reconnectTimer = null
+                if (!document.hidden && !this.manuallyClosed && !this.reconnectDisabled) this.connectWebSocket()
+            }, delay)
+        },
+        showDisconnectedMessage() {
+            if (this.reconnectDisabled || this.manuallyClosed) return
+            this.reconnectDisabled = true
+            if (!this.savePass) {
+                this.$store.commit('SET_PASS', '')
+                if (this.ssh) this.ssh.password = ''
+            }
+            this.$message({
+                message: this.$t('wsClose'),
+                type: 'warning',
+                duration: 0,
+                showClose: true,
+                onClose: () => {
+                    this.$emit('close-tab')
                 }
             })
         },
@@ -163,6 +210,10 @@ export default {
             document.title = sshInfo.host
         },
         close() {
+            this.manuallyClosed = true
+            clearTimeout(this.reconnectTimer)
+            this.reconnectTimer = null
+            this.stopHeartbeat()
             if (this.ws !== null) {
                 this.ws.close()
                 this.resetClose = true
@@ -173,6 +224,7 @@ export default {
         }
     },
     beforeDestroy() {
+        document.removeEventListener('visibilitychange', this.visibilityHandler)
         this.close()
     }
 }
