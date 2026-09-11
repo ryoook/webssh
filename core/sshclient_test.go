@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"strconv"
@@ -10,6 +11,42 @@ import (
 
 	"golang.org/x/crypto/ssh"
 )
+
+func TestDecodedMsgToSSHClientDefaultsRequestTTYToTrue(t *testing.T) {
+	sshInfo := base64.StdEncoding.EncodeToString([]byte(`{"username":"root","ipaddress":"127.0.0.1","port":22}`))
+
+	client, err := DecodedMsgToSSHClient(sshInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !client.ShouldRequestTTY() {
+		t.Fatal("legacy connection should request a pseudo-terminal")
+	}
+}
+
+func TestDecodedMsgToSSHClientCanDisableRequestTTY(t *testing.T) {
+	sshInfo := base64.StdEncoding.EncodeToString([]byte(`{"username":"root","ipaddress":"127.0.0.1","port":22,"requesttty":false}`))
+
+	client, err := DecodedMsgToSSHClient(sshInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if client.ShouldRequestTTY() {
+		t.Fatal("connection should not request a pseudo-terminal when requesttty is false")
+	}
+}
+
+func TestDecodedMsgToSSHClientIncludesStartupCommand(t *testing.T) {
+	sshInfo := base64.StdEncoding.EncodeToString([]byte(`{"username":"root","ipaddress":"127.0.0.1","port":22,"command":"cd /data/project && bash"}`))
+
+	client, err := DecodedMsgToSSHClient(sshInfo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if client.Command != "cd /data/project && bash" {
+		t.Fatalf("unexpected startup command: %q", client.Command)
+	}
+}
 
 func TestGenerateClientSupportsKeyboardInteractivePassword(t *testing.T) {
 	_, privateKey, err := ed25519.GenerateKey(rand.Reader)

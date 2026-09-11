@@ -108,6 +108,20 @@
                         <el-radio-button :label="1">{{ $t('privateKey') }}</el-radio-button>
                     </el-radio-group>
                 </el-form-item>
+                <el-form-item :label="$t('Terminal')">
+                    <el-switch
+                        v-model="form.requesttty"
+                        :active-text="$t('RequestTTY')"
+                    />
+                </el-form-item>
+                <el-form-item :label="$t('StartupCommand')">
+                    <el-input
+                        v-model="form.command"
+                        type="textarea"
+                        :rows="3"
+                        :placeholder="$t('StartupCommandTip')"
+                    />
+                </el-form-item>
                 <el-form-item
                     :label="form.logintype === 1 ? $t('privateKey') : $t('password')"
                     prop="password"
@@ -158,7 +172,9 @@ function emptyConnection() {
         username: 'root',
         port: 22,
         password: '',
-        logintype: 0
+        logintype: 0,
+        requesttty: true,
+        command: ''
     }
 }
 
@@ -234,7 +250,7 @@ export default {
             this.formVisible = true
         },
         editConnection(connection, connectAfterSave = false) {
-            this.form = Object.assign({}, connection)
+            this.form = Object.assign({ requesttty: true, command: '' }, connection)
             this.editing = true
             this.connectAfterSave = connectAfterSave
             this.formVisible = true

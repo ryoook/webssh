@@ -20,6 +20,7 @@ import {
     Empty,
     RadioGroup,
     RadioButton,
+    Switch,
     Upload,
     Dropdown,
     DropdownMenu,
@@ -38,6 +39,7 @@ const element = {
         Vue.use(Empty)
         Vue.use(RadioGroup)
         Vue.use(RadioButton)
+        Vue.use(Switch)
         Vue.use(Row)
         Vue.use(Col)
         Vue.use(Form)

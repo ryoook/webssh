@@ -50,15 +50,17 @@ func (w *wsOutput) Write(p []byte) (int, error) {
 
 // SSHClient 结构体
 type SSHClient struct {
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	IPAddress string `json:"ipaddress"`
-	Port      int    `json:"port"`
-	LoginType int    `json:"logintype"`
-	Client    *ssh.Client
-	Sftp      *sftp.Client
-	StdinPipe io.WriteCloser
-	Session   *ssh.Session
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	IPAddress  string `json:"ipaddress"`
+	Port       int    `json:"port"`
+	LoginType  int    `json:"logintype"`
+	RequestTTY *bool  `json:"requesttty"`
+	Command    string `json:"command"`
+	Client     *ssh.Client
+	Sftp       *sftp.Client
+	StdinPipe  io.WriteCloser
+	Session    *ssh.Session
 }
 
 // NewSSHClient 返回默认ssh信息
@@ -66,7 +68,14 @@ func NewSSHClient() SSHClient {
 	client := SSHClient{}
 	client.Username = "root"
 	client.Port = 22
+	requestTTY := true
+	client.RequestTTY = &requestTTY
 	return client
+}
+
+// ShouldRequestTTY reports whether the SSH session should allocate a pseudo-terminal.
+func (sclient *SSHClient) ShouldRequestTTY() bool {
+	return sclient.RequestTTY == nil || *sclient.RequestTTY
 }
 
 // Close all closable fields of SSHClient that is opened:

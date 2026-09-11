@@ -10,6 +10,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -101,10 +102,17 @@ func (sclient *SSHClient) InitTerminal(ws *websocket.Conn, rows, cols int) *SSHC
 		ssh.TTY_OP_OSPEED: 14400,
 	}
 
-	if err := sshSession.RequestPty("xterm", rows, cols, modes); err != nil {
-		return nil
+	if sclient.ShouldRequestTTY() {
+		if err := sshSession.RequestPty("xterm", rows, cols, modes); err != nil {
+			return nil
+		}
 	}
-	if err := sshSession.Shell(); err != nil {
+	if strings.TrimSpace(sclient.Command) != "" {
+		err = sshSession.Start(sclient.Command)
+	} else {
+		err = sshSession.Shell()
+	}
+	if err != nil {
 		return nil
 	}
 	return sclient
@@ -113,36 +121,49 @@ func (sclient *SSHClient) InitTerminal(ws *websocket.Conn, rows, cols int) *SSHC
 // Connect ws连接
 func (sclient *SSHClient) Connect(ws *websocket.Conn, timeout time.Duration, closeTip string) {
 	stopCh := make(chan struct{})
+	var stopOnce sync.Once
+	stop := func() {
+		stopOnce.Do(func() { close(stopCh) })
+	}
 	//这里第一个协程获取用户的输入
 	go func() {
 		for {
 			// p为用户输入
 			_, p, err := ws.ReadMessage()
 			if err != nil {
-				close(stopCh)
+				stop()
 				return
 			}
 			if string(p) == "ping" {
 				continue
 			}
 			if strings.Contains(string(p), "resize") {
+				if !sclient.ShouldRequestTTY() {
+					continue
+				}
 				resizeSlice := strings.Split(string(p), ":")
 				rows, _ := strconv.Atoi(resizeSlice[1])
 				cols, _ := strconv.Atoi(resizeSlice[2])
 				err := sclient.Session.WindowChange(rows, cols)
 				if err != nil {
 					log.Println(err)
-					close(stopCh)
+					stop()
 					return
 				}
 				continue
 			}
 			_, err = sclient.StdinPipe.Write(p)
 			if err != nil {
-				close(stopCh)
+				stop()
 				return
 			}
 		}
+	}()
+	go func() {
+		if err := sclient.Session.Wait(); err != nil {
+			log.Println(err)
+		}
+		stop()
 	}()
 
 	defer func() {

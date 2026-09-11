@@ -1,4 +1,4 @@
 import request from '@/utils/request'
 export function fileList(path, sshInfo) {
-    return request.get(`/file/list?path=${path}&sshInfo=${sshInfo}`)
+    return request.get(`/file/list?path=${encodeURIComponent(path)}&sshInfo=${encodeURIComponent(sshInfo)}`)
 }

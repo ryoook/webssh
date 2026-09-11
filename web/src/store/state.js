@@ -6,7 +6,9 @@ export default {
         username: 'root',
         port: 22,
         password: '',
-        logintype: 0
+        logintype: 0,
+        requesttty: true,
+        command: ''
     },
     sshList: [],
     commandList: [],

@@ -40,6 +40,8 @@ export default {
         state.sshInfo.username = ssh.username
         state.sshInfo.port = ssh.port
         state.sshInfo.logintype = ssh.logintype
+        state.sshInfo.requesttty = ssh.requesttty !== false
+        state.sshInfo.command = ssh.command || ''
         if (ssh.password !== undefined) {
             state.sshInfo.password = ssh.password
         }

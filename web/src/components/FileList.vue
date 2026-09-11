@@ -229,7 +229,7 @@ export default {
         },
         downloadFile() {
             const prefix = process.env.NODE_ENV === 'production' ? `${location.origin}` : 'api'
-            const downloadUrl = `${prefix}/file/download?path=${this.downloadFilePath}&sshInfo=${this.$store.getters.sshReq}`
+            const downloadUrl = `${prefix}/file/download?path=${encodeURIComponent(this.downloadFilePath)}&sshInfo=${encodeURIComponent(this.$store.getters.sshReq)}`
             window.open(downloadUrl)
         },
         updatePath(path) {

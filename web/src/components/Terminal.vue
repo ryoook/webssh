@@ -74,7 +74,7 @@ export default {
                 closeTip = 'Connection timed out!'
             }
             // open websocket
-            this.ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}${prefix}/term?sshInfo=${sshReq}&rows=${this.term.rows}&cols=${this.term.cols}&closeTip=${closeTip}`)
+            this.ws = new WebSocket(`${(location.protocol === 'http:' ? 'ws' : 'wss')}://${location.host}${prefix}/term?sshInfo=${encodeURIComponent(sshReq)}&rows=${this.term.rows}&cols=${this.term.cols}&closeTip=${encodeURIComponent(closeTip)}`)
             this.ws.onopen = () => {
                 console.log(Date(), 'onopen')
                 self.connected()

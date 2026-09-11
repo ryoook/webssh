@@ -13,7 +13,8 @@ const requiredComponents = [
     'Empty',
     'InputNumber',
     'RadioGroup',
-    'RadioButton'
+    'RadioButton',
+    'Switch'
 ]
 
 requiredComponents.forEach(component => {
