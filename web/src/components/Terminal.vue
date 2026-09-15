@@ -17,10 +17,10 @@ export default {
         return {
             term: null,
             ws: null,
-            resetClose: false,
             manuallyClosed: false,
             reconnectAttempts: 0,
             reconnectTimer: null,
+            reconnectResetTimer: null,
             reconnectDisabled: false,
             heartbeatTimer: null,
             visibilityHandler: null,
@@ -123,7 +123,7 @@ export default {
             ws.onopen = () => {
                 console.log(Date(), 'onopen')
                 if (this.ws !== ws) return
-                this.reconnectAttempts = 0
+                this.scheduleReconnectReset()
                 this.startHeartbeat()
                 this.connected()
             }
@@ -131,17 +131,12 @@ export default {
                 console.log(Date(), 'onclose')
                 if (this.ws !== ws) return
                 this.stopHeartbeat()
+                clearTimeout(this.reconnectResetTimer)
+                this.reconnectResetTimer = null
                 this.ws = null
-                if (this.resetClose || this.manuallyClosed) {
-                    this.resetClose = false
-                    return
-                }
+                if (this.manuallyClosed) return
                 if (document.hidden) return
-                if (this.reconnectAttempts > 0) {
-                    this.reconnect()
-                    return
-                }
-                this.showDisconnectedMessage()
+                this.reconnect()
             }
             ws.onerror = () => {
                 console.log(Date(), 'onerror')
@@ -164,6 +159,13 @@ export default {
         stopHeartbeat() {
             clearInterval(this.heartbeatTimer)
             this.heartbeatTimer = null
+        },
+        scheduleReconnectReset() {
+            clearTimeout(this.reconnectResetTimer)
+            this.reconnectResetTimer = setTimeout(() => {
+                this.reconnectAttempts = 0
+                this.reconnectResetTimer = null
+            }, 10000)
         },
         reconnect() {
             if (this.manuallyClosed || this.reconnectDisabled || document.hidden || this.reconnectTimer || this.isWebSocketActive()) return
@@ -213,10 +215,11 @@ export default {
             this.manuallyClosed = true
             clearTimeout(this.reconnectTimer)
             this.reconnectTimer = null
+            clearTimeout(this.reconnectResetTimer)
+            this.reconnectResetTimer = null
             this.stopHeartbeat()
             if (this.ws !== null) {
                 this.ws.close()
-                this.resetClose = true
             }
             if (this.term !== null) {
                 this.term.dispose()
