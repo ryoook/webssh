@@ -159,7 +159,7 @@ export default {
             this.stopHeartbeat()
             this.heartbeatTimer = setInterval(() => {
                 if (this.isWebSocketOpen()) this.ws.send('ping')
-            }, 30000)
+            }, 5000)
         },
         stopHeartbeat() {
             clearInterval(this.heartbeatTimer)
