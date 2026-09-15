@@ -40,6 +40,10 @@ assert_contains() {
 }
 
 assert_contains 'port_in_use'
+assert_contains 'stop_existing_process'
+assert_contains 'echo "[1/4] 关闭现有服务..."'
+assert_contains 'kill "$existing_pid"'
+assert_contains 'PID $existing_pid 不属于当前 WebSSH 服务'
 assert_contains 'npm ci'
 assert_contains 'vue-cli-service build'
 assert_contains 'node_major='
@@ -49,6 +53,13 @@ assert_contains 'GOTOOLCHAIN=local'
 assert_contains 'nohup'
 assert_contains '>> "$LOG_PATH" 2>&1'
 assert_contains '-c "$CONFIG_PATH"'
+
+stop_line=$(grep -n '^stop_existing_process$' "$script_path" | cut -d: -f1)
+build_line=$(grep -n '^echo "\[2/4\] 编译前端' "$script_path" | cut -d: -f1)
+[[ -n "$stop_line" && -n "$build_line" && "$stop_line" -lt "$build_line" ]] || {
+    echo "existing process must stop before build" >&2
+    exit 1
+}
 
 go_mod_content=$(<"$go_mod_path")
 [[ "$go_mod_content" == *'go 1.21.0'* ]] || {

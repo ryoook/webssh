@@ -54,11 +54,53 @@ port_in_use() {
     fi
 }
 
+stop_existing_process() {
+    local existing_pid
+    local existing_command
+
+    if [[ ! -f "$PID_PATH" ]]; then
+        echo "未发现现有 WebSSH 进程"
+        return
+    fi
+
+    existing_pid=$(<"$PID_PATH")
+    if [[ ! "$existing_pid" =~ ^[0-9]+$ ]]; then
+        fail "PID 文件内容无效: $PID_PATH"
+    fi
+
+    if ! kill -0 "$existing_pid" >/dev/null 2>&1; then
+        rm -f "$PID_PATH"
+        echo "已清理失效的 PID 文件"
+        return
+    fi
+
+    existing_command=$(ps -p "$existing_pid" -o command= 2>/dev/null || true)
+    if [[ "$existing_command" != "$BINARY_PATH"* ]]; then
+        fail "PID $existing_pid 不属于当前 WebSSH 服务，请检查 $PID_PATH"
+    fi
+
+    echo "正在关闭 WebSSH，PID: $existing_pid"
+    kill "$existing_pid"
+    for _ in {1..20}; do
+        if ! kill -0 "$existing_pid" >/dev/null 2>&1; then
+            rm -f "$PID_PATH"
+            echo "现有 WebSSH 进程已关闭"
+            return
+        fi
+        sleep 0.5
+    done
+
+    fail "WebSSH 进程 $existing_pid 未能在 10 秒内退出"
+}
+
+echo "[1/4] 关闭现有服务..."
+stop_existing_process
+
 if port_in_use; then
-    fail "端口 $PORT 已被占用，请停止现有服务或修改 .env"
+    fail "关闭现有服务后端口 $PORT 仍被占用，请检查占用进程或修改 .env"
 fi
 
-echo "[1/3] 编译前端..."
+echo "[2/4] 编译前端..."
 (
     cd "$WEB_DIR"
     if [[ ! -d node_modules ]]; then
@@ -79,7 +121,7 @@ echo "[1/3] 编译前端..."
     fi
 )
 
-echo "[2/3] 编译 Go 程序..."
+echo "[3/4] 编译 Go 程序..."
 mkdir -p "$BINARY_DIR"
 (
     cd "$PROJECT_DIR"
@@ -95,7 +137,7 @@ mkdir -p "$BINARY_DIR"
     GOTOOLCHAIN=local go build -o "$BINARY_PATH" .
 )
 
-echo "[3/3] 后台启动服务..."
+echo "[4/4] 后台启动服务..."
 mkdir -p "$(dirname "$LOG_PATH")"
 mkdir -p "$CONFIG_PATH"
 
